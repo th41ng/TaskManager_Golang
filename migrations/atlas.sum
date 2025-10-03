@@ -1,0 +1,7 @@
+h1:Z6js3y9V0FFgGGUumyrmOsflo0htxBbOQT0649vVDOo=
+20251003062604_init_schema.sql h1:6B1GsFpZPrqWR6bNpuJohquYy7htScQd6VWSsNDMaPg=
+20251003063045_rename_and_change_type.sql h1:uoMNyqbeyushIHHd2BEL9O9O68fK183zzxFW2TZ/dzU=
+20251003065824_add Project table.sql h1:+yb8bgpTDKpCRu7VrXNMNk5hkgDgzgSDz0THGLDrnVQ=
+20251003070010_add Project table.sql h1:2LQjzYmbBSQZQ7PSzVsMqmPtxpXz8tjyGZk9L0X/RDE=
+20251003072003_change relationship.sql h1:8XagLrrlYcVK2E1DT6bsPm9SbmNYAoU9NG3sslaalDw=
+20251003084418_add-field-prioriy-in-Task.sql h1:JOqrdHu/sXarUj1pcu8IHIh+9gxA7ouaYURL2Xrc1zc=
