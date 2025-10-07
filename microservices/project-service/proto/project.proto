@@ -1,0 +1,58 @@
+syntax = "proto3";
+
+package project;
+
+// Go package cho gRPC codegen
+option go_package = "taskmanager/microservices/project-service/pb;pb";
+
+// ProjectService cung cấp CRUD cho Project
+service ProjectService {
+  rpc CreateProject (CreateProjectRequest) returns (ProjectResponse);
+  rpc GetProject (GetProjectRequest) returns (ProjectResponse);
+  rpc UpdateProject (UpdateProjectRequest) returns (ProjectResponse);
+  rpc DeleteProject (DeleteProjectRequest) returns (DeleteProjectResponse);
+  rpc ListProjects (ListProjectsRequest) returns (ListProjectsResponse);
+}
+
+// Request tạo project
+message CreateProjectRequest {
+  string name = 1;
+  int32 owner_id = 2;
+}
+
+// Request lấy project theo ID
+message GetProjectRequest {
+  int32 id = 1;
+}
+
+// Request cập nhật project
+message UpdateProjectRequest {
+  int32 id = 1;
+  string name = 2;
+  int32 owner_id = 3;
+}
+
+// Request xóa project
+message DeleteProjectRequest {
+  int32 id = 1;
+}
+
+// Request lấy danh sách project
+message ListProjectsRequest {}
+
+// Response xóa project
+message DeleteProjectResponse {
+  bool success = 1;
+}
+
+// Response project
+message ProjectResponse {
+  int32 id = 1;
+  string name = 2;
+  int32 owner_id = 3;
+}
+
+// Response danh sách project
+message ListProjectsResponse {
+  repeated ProjectResponse projects = 1;
+}

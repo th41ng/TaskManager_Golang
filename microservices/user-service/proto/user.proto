@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+package user;
+
+// Go package cho gRPC codegen
+option go_package = "taskmanager/microservices/user-service/pb;pb";
+
+service UserService {
+  rpc CreateUser (CreateUserRequest) returns (UserResponse);
+  rpc GetUser (GetUserRequest) returns (UserResponse);
+  rpc UpdateUser (UpdateUserRequest) returns (UserResponse);
+  rpc DeleteUser (DeleteUserRequest) returns (DeleteUserResponse);
+  rpc ListUsers (ListUsersRequest) returns (ListUsersResponse);
+}
+
+message CreateUserRequest {
+  string username = 1;
+  string password = 2;
+}
+
+message GetUserRequest {
+  int32 id = 1;
+}
+
+message UpdateUserRequest {
+  int32 id = 1;
+  string username = 2;
+  string password = 3;
+}
+
+message DeleteUserRequest {
+  int32 id = 1;
+}
+
+message ListUsersRequest {}
+
+message DeleteUserResponse {
+  bool success = 1;
+}
+
+message UserResponse {
+  int32 id = 1;
+  string username = 2;
+}
+
+message ListUsersResponse {
+  repeated UserResponse users = 1;
+}

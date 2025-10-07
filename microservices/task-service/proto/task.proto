@@ -1,0 +1,63 @@
+syntax = "proto3";
+
+package task;
+
+// Go package cho gRPC codegen
+option go_package = "taskmanager/microservices/task-service/pb;pb";
+
+// TaskService cung cấp CRUD cho Task
+service TaskService {
+  rpc CreateTask (CreateTaskRequest) returns (TaskResponse);
+  rpc GetTask (GetTaskRequest) returns (TaskResponse);
+  rpc UpdateTask (UpdateTaskRequest) returns (TaskResponse);
+  rpc DeleteTask (DeleteTaskRequest) returns (DeleteTaskResponse);
+  rpc ListTasks (ListTasksRequest) returns (ListTasksResponse);
+}
+
+// Request tạo task
+message CreateTaskRequest {
+  string title = 1;
+  int32 project_id = 2;
+  int32 priority = 3;
+}
+
+// Request lấy task theo ID
+message GetTaskRequest {
+  int32 id = 1;
+}
+
+// Request cập nhật task
+message UpdateTaskRequest {
+  int32 id = 1;
+  string title = 2;
+  bool done = 3;
+  int32 priority = 4;
+  int32 project_id = 5;
+}
+
+// Request xóa task
+message DeleteTaskRequest {
+  int32 id = 1;
+}
+
+// Request lấy danh sách task
+message ListTasksRequest {}
+
+// Response xóa task
+message DeleteTaskResponse {
+  bool success = 1;
+}
+
+// Response task
+message TaskResponse {
+  int32 id = 1;
+  string title = 2;
+  bool done = 3;
+  int32 priority = 4;
+  int32 project_id = 5;
+}
+
+// Response danh sách task
+message ListTasksResponse {
+  repeated TaskResponse tasks = 1;
+}
