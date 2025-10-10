@@ -10,6 +10,7 @@ import (
 
 	"taskmanager/microservices/project-service/ent" // import ent package
 
+	_ "github.com/go-sql-driver/mysql"
 	"google.golang.org/grpc"
 )
 

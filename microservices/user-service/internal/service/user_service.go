@@ -2,12 +2,29 @@ package service
 
 import (
 	"context"
+	"errors"
 	"log"
+	"time"
+
+	"github.com/golang-jwt/jwt/v5"
+	"golang.org/x/crypto/bcrypt"
 
 	"taskmanager/microservices/user-service/ent"
 	"taskmanager/microservices/user-service/ent/user"
 	pb "taskmanager/microservices/user-service/pb"
 )
+
+var jwtKey = []byte("12345678901234567890123456789012")
+
+func generateJWT(userID int, username string) (string, error) {
+	claims := jwt.MapClaims{
+		"user_id":  userID,
+		"username": username,
+		"exp":      time.Now().Add(24 * time.Hour).Unix(),
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return token.SignedString(jwtKey)
+}
 
 type UserService struct {
 	pb.UnimplementedUserServiceServer
@@ -18,22 +35,59 @@ func NewUserService(client *ent.Client) *UserService {
 	return &UserService{client: client}
 }
 
-// CreateUser
+// CreateUser: hash password trước khi lưu
 func (s *UserService) CreateUser(ctx context.Context, req *pb.CreateUserRequest) (*pb.UserResponse, error) {
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	if err != nil {
+		log.Printf("failed to hash password: %v", err)
+		return nil, err
+	}
+
 	u, err := s.client.User.
 		Create().
 		SetUsername(req.Username).
-		SetPassword(req.Password).
+		SetPassword(string(hashedPassword)).
 		Save(ctx)
 	if err != nil {
 		log.Printf("failed to create user: %v", err)
 		return nil, err
 	}
 
+	token, err := generateJWT(u.ID, u.Username)
+	if err != nil {
+		log.Printf("failed to generate token: %v", err)
+		return nil, err
+	}
+
 	return &pb.UserResponse{
 		Id:       int32(u.ID),
 		Username: u.Username,
+		Token:    token,
 	}, nil
+}
+
+// Login: kiểm tra username + password, trả JWT
+func (s *UserService) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginResponse, error) {
+	u, err := s.client.User.Query().
+		Where(user.UsernameEQ(req.Username)).
+		Only(ctx)
+	if err != nil {
+		log.Printf("login failed: user not found: %v", err)
+		return nil, errors.New("invalid username or password")
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(req.Password)); err != nil {
+		log.Printf("login failed: wrong password for user %s", req.Username)
+		return nil, errors.New("invalid username or password")
+	}
+
+	token, err := generateJWT(u.ID, u.Username)
+	if err != nil {
+		log.Printf("failed to generate token: %v", err)
+		return nil, err
+	}
+
+	return &pb.LoginResponse{Token: token}, nil
 }
 
 // GetUser
@@ -52,13 +106,21 @@ func (s *UserService) GetUser(ctx context.Context, req *pb.GetUserRequest) (*pb.
 	}, nil
 }
 
-// UpdateUser
+// UpdateUser: nếu password được cập nhật, hash trước khi lưu
 func (s *UserService) UpdateUser(ctx context.Context, req *pb.UpdateUserRequest) (*pb.UserResponse, error) {
-	u, err := s.client.User.
-		UpdateOneID(int(req.Id)).
-		SetUsername(req.Username).
-		SetPassword(req.Password).
-		Save(ctx)
+	update := s.client.User.UpdateOneID(int(req.Id)).
+		SetUsername(req.Username)
+
+	if req.Password != "" {
+		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+		if err != nil {
+			log.Printf("failed to hash password: %v", err)
+			return nil, err
+		}
+		update.SetPassword(string(hashedPassword))
+	}
+
+	u, err := update.Save(ctx)
 	if err != nil {
 		log.Printf("failed to update user %d: %v", req.Id, err)
 		return nil, err

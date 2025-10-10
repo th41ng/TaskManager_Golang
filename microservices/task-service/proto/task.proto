@@ -17,8 +17,9 @@ service TaskService {
 // Request tạo task
 message CreateTaskRequest {
   string title = 1;
-  int32 project_id = 2;
+  bool done = 2;
   int32 priority = 3;
+  int32 project_id = 4;
 }
 
 // Request lấy task theo ID

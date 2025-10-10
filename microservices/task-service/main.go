@@ -9,6 +9,7 @@ import (
 	"taskmanager/microservices/task-service/internal/service"
 	pb "taskmanager/microservices/task-service/pb"
 
+	_ "github.com/go-sql-driver/mysql"
 	"google.golang.org/grpc"
 )
 
