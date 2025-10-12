@@ -3,6 +3,7 @@ go 1.25.1
 use (
 	./gateway
 	./microservices/project-service
+	./microservices/report-service
 	./microservices/task-service
 	./microservices/user-service
 )

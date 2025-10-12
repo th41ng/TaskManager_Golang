@@ -2,32 +2,22 @@ package service
 
 import (
 	"context"
-	"log"
-
-	"taskmanager/microservices/project-service/ent"
-	"taskmanager/microservices/project-service/ent/project"
 	pb "taskmanager/microservices/project-service/pb"
 )
 
 type ProjectService struct {
 	pb.UnimplementedProjectServiceServer
-	client *ent.Client
+	repo ProjectRepo
 }
 
-// Constructor
-func NewProjectService(client *ent.Client) *ProjectService {
-	return &ProjectService{client: client}
+func NewProjectService(repo ProjectRepo) *ProjectService {
+	return &ProjectService{repo: repo}
 }
 
 // CreateProject
 func (s *ProjectService) CreateProject(ctx context.Context, req *pb.CreateProjectRequest) (*pb.ProjectResponse, error) {
-	p, err := s.client.Project.
-		Create().
-		SetName(req.Name).
-		SetOwnerID(int(req.OwnerId)).
-		Save(ctx)
+	p, err := s.repo.Create(ctx, req.Name, int(req.OwnerId))
 	if err != nil {
-		log.Printf("failed to create project: %v", err)
 		return nil, err
 	}
 
@@ -40,12 +30,8 @@ func (s *ProjectService) CreateProject(ctx context.Context, req *pb.CreateProjec
 
 // GetProject
 func (s *ProjectService) GetProject(ctx context.Context, req *pb.GetProjectRequest) (*pb.ProjectResponse, error) {
-	p, err := s.client.Project.
-		Query().
-		Where(project.ID(int(req.Id))).
-		Only(ctx)
+	p, err := s.repo.GetByID(ctx, int(req.Id))
 	if err != nil {
-		log.Printf("project %d not found: %v", req.Id, err)
 		return nil, err
 	}
 
@@ -58,13 +44,8 @@ func (s *ProjectService) GetProject(ctx context.Context, req *pb.GetProjectReque
 
 // UpdateProject
 func (s *ProjectService) UpdateProject(ctx context.Context, req *pb.UpdateProjectRequest) (*pb.ProjectResponse, error) {
-	p, err := s.client.Project.
-		UpdateOneID(int(req.Id)).
-		SetName(req.Name).
-		SetOwnerID(int(req.OwnerId)).
-		Save(ctx)
+	p, err := s.repo.Update(ctx, int(req.Id), req.Name, int(req.OwnerId))
 	if err != nil {
-		log.Printf("failed to update project %d: %v", req.Id, err)
 		return nil, err
 	}
 
@@ -77,22 +58,17 @@ func (s *ProjectService) UpdateProject(ctx context.Context, req *pb.UpdateProjec
 
 // DeleteProject
 func (s *ProjectService) DeleteProject(ctx context.Context, req *pb.DeleteProjectRequest) (*pb.DeleteProjectResponse, error) {
-	err := s.client.Project.
-		DeleteOneID(int(req.Id)).
-		Exec(ctx)
+	err := s.repo.Delete(ctx, int(req.Id))
 	if err != nil {
-		log.Printf("failed to delete project %d: %v", req.Id, err)
 		return &pb.DeleteProjectResponse{Success: false}, err
 	}
-
 	return &pb.DeleteProjectResponse{Success: true}, nil
 }
 
 // ListProjects
 func (s *ProjectService) ListProjects(ctx context.Context, req *pb.ListProjectsRequest) (*pb.ListProjectsResponse, error) {
-	projects, err := s.client.Project.Query().All(ctx)
+	projects, err := s.repo.List(ctx)
 	if err != nil {
-		log.Printf("failed to list projects: %v", err)
 		return nil, err
 	}
 
@@ -104,6 +80,5 @@ func (s *ProjectService) ListProjects(ctx context.Context, req *pb.ListProjectsR
 			OwnerId: int32(p.OwnerID),
 		})
 	}
-
 	return resp, nil
 }

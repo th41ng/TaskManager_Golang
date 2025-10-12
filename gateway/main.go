@@ -46,21 +46,38 @@ func (g *ginResponseWriter) Write(b []byte) (int, error) {
 }
 
 func main() {
-	Userconnect, err := grpc.Dial("localhost:50051", grpc.WithInsecure())
+	// Userconnect, err := grpc.Dial("localhost:50051", grpc.WithInsecure())
+	// if err != nil {
+	// 	log.Fatalf("failed to connect to user-service: %v", err)
+	// }
+	// defer Userconnect.Close()
+
+	// Taskconnect, err := grpc.Dial("localhost:50052", grpc.WithInsecure())
+	// if err != nil {
+	// 	log.Fatalf("failed to connect to user-service: %v", err)
+	// }
+	// defer Taskconnect.Close()
+
+	// ProjectConnect, err := grpc.Dial("localhost:5003", grpc.WithInsecure())
+	// if err != nil {
+	// 	log.Fatalf("failed to connect to user-service: %v", err)
+	// }
+	// defer ProjectConnect.Close()
+	Userconnect, err := grpc.Dial("user-service:50051", grpc.WithInsecure())
 	if err != nil {
 		log.Fatalf("failed to connect to user-service: %v", err)
 	}
 	defer Userconnect.Close()
 
-	Taskconnect, err := grpc.Dial("localhost:50052", grpc.WithInsecure())
+	Taskconnect, err := grpc.Dial("task-service:50052", grpc.WithInsecure())
 	if err != nil {
-		log.Fatalf("failed to connect to user-service: %v", err)
+		log.Fatalf("failed to connect to task-service: %v", err)
 	}
 	defer Taskconnect.Close()
 
-	ProjectConnect, err := grpc.Dial("localhost:5003", grpc.WithInsecure())
+	ProjectConnect, err := grpc.Dial("project-service:50053", grpc.WithInsecure())
 	if err != nil {
-		log.Fatalf("failed to connect to user-service: %v", err)
+		log.Fatalf("failed to connect to project-service: %v", err)
 	}
 	defer ProjectConnect.Close()
 

@@ -1,0 +1,103 @@
+version: "3.9"
+
+services:
+  mysql-user:
+    image: mysql:8.0
+    container_name: mysql-user
+    environment:
+      MYSQL_ROOT_PASSWORD: 123123
+      MYSQL_DATABASE: user-db
+    ports:
+      - "33061:3306"
+    volumes:
+      - user-db-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  mysql-task:
+    image: mysql:8.0
+    container_name: mysql-task
+    environment:
+      MYSQL_ROOT_PASSWORD: 123123
+      MYSQL_DATABASE: task-db
+    ports:
+      - "33062:3306"
+    volumes:
+      - task-db-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  mysql-project:
+    image: mysql:8.0
+    container_name: mysql-project
+    environment:
+      MYSQL_ROOT_PASSWORD: 123123
+      MYSQL_DATABASE: project-db
+    ports:
+      - "33063:3306"
+    volumes:
+      - project-db-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  user-service:
+    build: ./microservices/user-service
+    depends_on:
+      mysql-user:
+        condition: service_healthy
+    environment:
+      DB_HOST: mysql-user
+      DB_USER: root
+      DB_PASSWORD: 123123
+      DB_NAME: user-db
+    ports:
+      - "50054:50051"
+
+  task-service:
+    build: ./microservices/task-service
+    depends_on:
+      mysql-task:
+        condition: service_healthy
+    environment:
+      DB_HOST: mysql-task
+      DB_USER: root
+      DB_PASSWORD: 123123
+      DB_NAME: task-db
+    ports:
+      - "50055:50052"
+
+  project-service:
+    build: ./microservices/project-service
+    depends_on:
+      mysql-project:
+        condition: service_healthy
+    environment:
+      DB_HOST: mysql-project
+      DB_USER: root
+      DB_PASSWORD: 123123
+      DB_NAME: project-db
+    ports:
+      - "50056:50053"
+
+  gateway:
+    build: ./gateway
+    depends_on:
+      - user-service
+      - task-service
+      - project-service
+    ports:
+      - "8080:8080"
+
+volumes:
+  user-db-data:
+  task-db-data:
+  project-db-data:
