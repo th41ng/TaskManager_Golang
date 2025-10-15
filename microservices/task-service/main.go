@@ -32,8 +32,8 @@ func main() {
 		log.Fatalf("failed creating schema resources: %v", err)
 	}
 
-	// 3️⃣ Tạo repository thật dùng Ent
-	taskRepo := service.NewEntTaskRepo(client)
+	// 3️⃣ Tạo repository thật dùng Ent (dùng generic repo)
+	taskRepo := service.NewTaskRepo(client)
 
 	// 4️⃣ Tạo TaskService (business logic)
 	taskService := service.NewTaskService(taskRepo)

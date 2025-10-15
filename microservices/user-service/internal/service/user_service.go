@@ -8,6 +8,8 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 
+	"taskmanager/internal/commonrepo"
+	"taskmanager/microservices/user-service/ent"
 	pb "taskmanager/microservices/user-service/pb"
 )
 
@@ -15,11 +17,12 @@ var jwtKey = []byte("12345678901234567890123456789012")
 
 type UserService struct {
 	pb.UnimplementedUserServiceServer
-	repo UserRepository
+	repo  *commonrepo.CRUDRepo[ent.User, *ent.Client]
+	query UserQuery
 }
 
-func NewUserService(repo UserRepository) *UserService {
-	return &UserService{repo: repo}
+func NewUserService(repo *commonrepo.CRUDRepo[ent.User, *ent.Client], query UserQuery) *UserService {
+	return &UserService{repo: repo, query: query}
 }
 
 func generateJWT(userID int, username string) (string, error) {
@@ -39,7 +42,7 @@ func (s *UserService) CreateUser(ctx context.Context, req *pb.CreateUserRequest)
 		return nil, err
 	}
 
-	u, err := s.repo.CreateUser(ctx, req.Username, string(hashed))
+	u, err := s.repo.Create(ctx, req.Username, string(hashed))
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +58,7 @@ func (s *UserService) CreateUser(ctx context.Context, req *pb.CreateUserRequest)
 
 // ✅ 2. Login
 func (s *UserService) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginResponse, error) {
-	u, err := s.repo.GetByUsername(ctx, req.Username)
+	u, err := s.query.GetByUsername(ctx, req.Username)
 	if err != nil {
 		return nil, errors.New("invalid username or password")
 	}
@@ -88,7 +91,7 @@ func (s *UserService) UpdateUser(ctx context.Context, req *pb.UpdateUserRequest)
 		return nil, err
 	}
 
-	u, err := s.repo.UpdateUser(ctx, int(req.Id), req.Username, string(hashed))
+	u, err := s.repo.Update(ctx, int(req.Id), req.Username, string(hashed))
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +104,7 @@ func (s *UserService) UpdateUser(ctx context.Context, req *pb.UpdateUserRequest)
 
 // ✅ 5. DeleteUser
 func (s *UserService) DeleteUser(ctx context.Context, req *pb.DeleteUserRequest) (*pb.DeleteUserResponse, error) {
-	err := s.repo.DeleteUser(ctx, int(req.Id))
+	err := s.repo.Delete(ctx, int(req.Id))
 	if err != nil {
 		return &pb.DeleteUserResponse{Success: false}, err
 	}
@@ -110,7 +113,7 @@ func (s *UserService) DeleteUser(ctx context.Context, req *pb.DeleteUserRequest)
 
 // ✅ 6. ListUsers
 func (s *UserService) ListUsers(ctx context.Context, req *pb.ListUsersRequest) (*pb.ListUsersResponse, error) {
-	users, err := s.repo.ListUsers(ctx)
+	users, err := s.repo.List(ctx)
 	if err != nil {
 		return nil, err
 	}

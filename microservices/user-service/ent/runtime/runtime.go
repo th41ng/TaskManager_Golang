@@ -2,7 +2,7 @@
 
 package runtime
 
-// The schema-stitching logic is generated in taskmanager/user-service/ent/runtime.go
+// The schema-stitching logic is generated in taskmanager/microservices/user-service/ent/runtime.go
 
 const (
 	Version = "v0.14.5"                                         // Version of ent codegen.

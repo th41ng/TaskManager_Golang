@@ -2,15 +2,17 @@ package service
 
 import (
 	"context"
+	"taskmanager/internal/commonrepo"
+	"taskmanager/microservices/project-service/ent"
 	pb "taskmanager/microservices/project-service/pb"
 )
 
 type ProjectService struct {
 	pb.UnimplementedProjectServiceServer
-	repo ProjectRepo
+	repo *commonrepo.CRUDRepo[ent.Project, *ent.Client]
 }
 
-func NewProjectService(repo ProjectRepo) *ProjectService {
+func NewProjectService(repo *commonrepo.CRUDRepo[ent.Project, *ent.Client]) *ProjectService {
 	return &ProjectService{repo: repo}
 }
 

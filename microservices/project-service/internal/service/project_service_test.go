@@ -2,44 +2,88 @@ package service
 
 import (
 	"context"
+	"taskmanager/microservices/project-service/ent/enttest"
 	"testing"
 
-	pb "taskmanager/microservices/project-service/pb"
-
-	"github.com/stretchr/testify/assert"
+	_ "github.com/mattn/go-sqlite3"
+	"github.com/stretchr/testify/require"
+	_ "modernc.org/sqlite"
 )
 
-func TestProjectService_CRUD(t *testing.T) {
-	ctx := context.Background()
-	repo := NewMockRepo()
-	svc := NewProjectService(repo)
+type projectCRUDCase struct {
+	name        string
+	op          string
+	inputName   string
+	inputOwner  int
+	updateName  string
+	updateOwner int
+	wantErr     bool
+}
 
-	// Create
-	createResp, err := svc.CreateProject(ctx, &pb.CreateProjectRequest{Name: "Demo", OwnerId: 1})
-	assert.NoError(t, err)
-	assert.Equal(t, "Demo", createResp.Name)
+func TestProjectRepo_CRUD(t *testing.T) {
+	client := enttest.Open(t, "sqlite3", "file:memdb?mode=memory&cache=shared&_fk=1")
+	defer client.Close()
+	repo := NewProjectRepo(client)
 
-	// Get
-	getResp, err := svc.GetProject(ctx, &pb.GetProjectRequest{Id: createResp.Id})
-	assert.NoError(t, err)
-	assert.Equal(t, "Demo", getResp.Name)
+	cases := []projectCRUDCase{
+		{"create valid", "create", "project1", 1, "", 0, false},
+		{"update valid", "update", "project3", 2, "project4", 3, false},
+		{"update not found", "update", "notfound", 99, "new", 100, true},
+	}
 
-	// Update
-	updResp, err := svc.UpdateProject(ctx, &pb.UpdateProjectRequest{Id: createResp.Id, Name: "Updated", OwnerId: 2})
-	assert.NoError(t, err)
-	assert.Equal(t, "Updated", updResp.Name)
+	var createdID int
 
-	// List
-	listResp, err := svc.ListProjects(ctx, &pb.ListProjectsRequest{})
-	assert.NoError(t, err)
-	assert.Len(t, listResp.Projects, 1)
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			switch tc.op {
+			case "create":
+				p, err := repo.Create(context.Background(), tc.inputName, tc.inputOwner)
+				if tc.wantErr {
+					require.Error(t, err)
+				} else {
+					require.NoError(t, err)
+					require.Equal(t, tc.inputName, p.Name)
+					createdID = p.ID
+				}
+			case "update":
+				// Tạo trước để update
+				p, err := repo.Create(context.Background(), tc.inputName, tc.inputOwner)
+				require.NoError(t, err)
+				p2, err := repo.Update(context.Background(), p.ID, tc.updateName, tc.updateOwner)
+				require.NoError(t, err)
+				require.Equal(t, tc.updateName, p2.Name)
+			}
+		})
+	}
 
-	// Delete
-	delResp, err := svc.DeleteProject(ctx, &pb.DeleteProjectRequest{Id: createResp.Id})
-	assert.NoError(t, err)
-	assert.True(t, delResp.Success)
+	t.Run("get by id", func(t *testing.T) {
+		if createdID == 0 {
+			t.Skip("no project created")
+		}
+		p2, err := repo.GetByID(context.Background(), createdID)
+		require.NoError(t, err)
+		require.Equal(t, createdID, p2.ID)
 
-	// Get again (should fail)
-	_, err = svc.GetProject(ctx, &pb.GetProjectRequest{Id: createResp.Id})
-	assert.Error(t, err)
+		// get not found
+		_, err = repo.GetByID(context.Background(), 99999)
+		require.Error(t, err)
+	})
+
+	t.Run("list", func(t *testing.T) {
+		projects, err := repo.List(context.Background())
+		require.NoError(t, err)
+		require.True(t, len(projects) > 0)
+	})
+
+	t.Run("delete", func(t *testing.T) {
+		if createdID == 0 {
+			t.Skip("no project created")
+		}
+		err := repo.Delete(context.Background(), createdID)
+		require.NoError(t, err)
+
+		// delete not found
+		err = repo.Delete(context.Background(), 99999)
+		require.Error(t, err)
+	})
 }

@@ -14,7 +14,6 @@ import (
 )
 
 func main() {
-	// 1️⃣ Kết nối database MySQL (repo thật)
 	// client, err := ent.Open("mysql", "root:123123@tcp(127.0.0.1:3306)/project-db?charset=utf8mb4&parseTime=True&loc=Local")
 	client, err := ent.Open("mysql", "root:123123@tcp(mysql-project:3306)/project-db?charset=utf8mb4&parseTime=True&loc=Local")
 	if err != nil {
@@ -24,18 +23,17 @@ func main() {
 
 	ctx := context.Background()
 
-	// 2️⃣ Tự động migrate schema
+	// migrate schema
 	if err := client.Schema.Create(ctx); err != nil {
 		log.Fatalf("failed creating schema resources: %v", err)
 	}
+	//Khởi tạo repository thật
+	projectRepo := service.NewProjectRepo(client)
 
-	// 3️⃣ Khởi tạo repository thật
-	repo := service.NewEntProjectRepo(client)
+	//Tạo service và inject repository vào
+	projectService := service.NewProjectService(projectRepo)
 
-	// 4️⃣ Tạo service và inject repository vào
-	projectService := service.NewProjectService(repo)
-
-	// 5️⃣ Khởi tạo server gRPC
+	//Khởi tạo server gRPC
 	lis, err := net.Listen("tcp", ":50053")
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
