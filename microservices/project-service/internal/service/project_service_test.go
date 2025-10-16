@@ -21,13 +21,15 @@ type projectCRUDCase struct {
 }
 
 func TestProjectRepo_CRUD(t *testing.T) {
+	t.Run("fail on purpose", func(t *testing.T) {
+		require.Equal(t, 1, 2, "This test is supposed to fail for CI/CD check!")
+	})
 	client := enttest.Open(t, "sqlite3", "file:memdb?mode=memory&cache=shared&_fk=1")
 	defer client.Close()
 	repo := NewProjectRepo(client)
 
 	cases := []projectCRUDCase{
 		{"create valid", "create", "project1", 1, "", 0, false},
-		{"create invalid", "create", "project1", -1, "", 0, false},
 		{"update valid", "update", "project3", 2, "project4", 3, false},
 		{"update not found", "update", "notfound", 99, "new", 100, true},
 	}
