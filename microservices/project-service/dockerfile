@@ -1,11 +1,9 @@
 # Stage builder
 FROM golang:1.25 AS builder
 WORKDIR /app
-COPY go.mod go.sum ./
-RUN go mod download
-# Copy code của service và cả internal/commonrepo
 COPY . .
 COPY ../internal/commonrepo ../internal/commonrepo
+RUN go mod download
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o project-service ./main.go
 
 # Stage runtime
