@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"net"
+	"os"
 
 	"taskmanager/microservices/task-service/ent"
 	"taskmanager/microservices/task-service/internal/service"
@@ -14,12 +15,12 @@ import (
 )
 
 func main() {
-	// 1️⃣ Kết nối database MySQL
-	client, err := ent.Open(
-		"mysql",
-		// "root:123123@tcp(127.0.0.1:3306)/task-?charset=utf8mb4&parseTime=True&loc=Local",
-		"root:123123@tcp(mysql-task:3306)/task-db?charset=utf8mb4&parseTime=True&loc=Local",
-	)
+	// Lấy DSN MySQL từ biến môi trường (ưu tiên Railway)
+	dsn := os.Getenv("MYSQL_URL")
+	if dsn == "" {
+		dsn = "root:123123@tcp(127.0.0.1:3306)/task-db?charset=utf8mb4&parseTime=True&loc=Local"
+	}
+	client, err := ent.Open("mysql", dsn)
 	if err != nil {
 		log.Fatalf("failed opening connection to mysql: %v", err)
 	}
