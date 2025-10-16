@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
 
 	"taskmanager/gateway/handlers"
 	pb "taskmanager/gateway/pb"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 )
 
 // Adapter chuyển net/http middleware sang Gin middleware
@@ -63,19 +65,43 @@ func main() {
 	// 	log.Fatalf("failed to connect to user-service: %v", err)
 	// }
 	// defer ProjectConnect.Close()
-	Userconnect, err := grpc.Dial("user-service:50051", grpc.WithInsecure())
+	// Userconnect, err := grpc.Dial("user-service:50051", grpc.WithInsecure())
+	// if err != nil {
+	// 	log.Fatalf("failed to connect to user-service: %v", err)
+	// }
+	// defer Userconnect.Close()
+
+	// Taskconnect, err := grpc.Dial("task-service:50052", grpc.WithInsecure())
+	// if err != nil {
+	// 	log.Fatalf("failed to connect to task-service: %v", err)
+	// }
+	// defer Taskconnect.Close()
+
+	// ProjectConnect, err := grpc.Dial("project-service:50053", grpc.WithInsecure())
+	// if err != nil {
+	// 	log.Fatalf("failed to connect to project-service: %v", err)
+	// }
+	// defer ProjectConnect.Close()
+
+	userAddr := os.Getenv("USER_SERVICE_URL")
+	taskAddr := os.Getenv("TASK_SERVICE_URL")
+	projectAddr := os.Getenv("PROJECT_SERVICE_URL")
+
+	creds := credentials.NewClientTLSFromCert(nil, "")
+
+	Userconnect, err := grpc.Dial(userAddr, grpc.WithTransportCredentials(creds))
 	if err != nil {
 		log.Fatalf("failed to connect to user-service: %v", err)
 	}
 	defer Userconnect.Close()
 
-	Taskconnect, err := grpc.Dial("task-service:50052", grpc.WithInsecure())
+	Taskconnect, err := grpc.Dial(taskAddr, grpc.WithTransportCredentials(creds))
 	if err != nil {
 		log.Fatalf("failed to connect to task-service: %v", err)
 	}
 	defer Taskconnect.Close()
 
-	ProjectConnect, err := grpc.Dial("project-service:50053", grpc.WithInsecure())
+	ProjectConnect, err := grpc.Dial(projectAddr, grpc.WithTransportCredentials(creds))
 	if err != nil {
 		log.Fatalf("failed to connect to project-service: %v", err)
 	}
