@@ -27,6 +27,7 @@ func TestProjectRepo_CRUD(t *testing.T) {
 
 	cases := []projectCRUDCase{
 		{"create valid", "create", "project1", 1, "", 0, false},
+		{"create invalid", "create", "project1", -1, "", 0, false},
 		{"update valid", "update", "project3", 2, "project4", 3, false},
 		{"update not found", "update", "notfound", 99, "new", 100, true},
 	}
