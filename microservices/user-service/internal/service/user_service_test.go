@@ -24,6 +24,7 @@ func TestUserRepo_CRUD(t *testing.T) {
 	client := enttest.Open(t, "sqlite3", "file:memdb?mode=memory&cache=shared&_fk=1")
 	defer client.Close()
 	repo := NewUserRepo(client)
+	query := NewUserQuery(client)
 
 	cases := []userCRUDCase{
 		{"create valid", "create", "testuser", "pass", "", "", false},
@@ -55,6 +56,21 @@ func TestUserRepo_CRUD(t *testing.T) {
 			}
 		})
 	}
+
+	t.Run("get by username", func(t *testing.T) {
+		username := "test"
+		password := "test"
+		u, err := repo.Create(context.Background(), username, password)
+		require.NoError(t, err)
+		u2, err := query.GetByUsername(context.Background(), username)
+		require.NoError(t, err)
+		require.Equal(t, u.ID, u2.ID)
+		require.Equal(t, username, u2.Username)
+
+		// get not found
+		_, err = query.GetByUsername(context.Background(), "notfounduser")
+		require.Error(t, err)
+	})
 
 	t.Run("get by id", func(t *testing.T) {
 		if createdID == 0 {

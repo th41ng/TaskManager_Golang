@@ -50,4 +50,4 @@ require (
 	taskmanager/internal/commonrepo v0.0.0
 )
 
-replace taskmanager/internal/commonrepo => ../internal/commonrepo
+replace taskmanager/internal/commonrepo => ./internal/commonrepo
