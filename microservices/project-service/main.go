@@ -4,7 +4,6 @@ import (
 	"context"
 	"log"
 	"net"
-	"os"
 
 	"taskmanager/microservices/project-service/ent"
 	"taskmanager/microservices/project-service/internal/service"
@@ -15,41 +14,9 @@ import (
 )
 
 func main() {
-	// Lấy DSN MySQL từ biến môi trường (ưu tiên Railway)
-	dsn := os.Getenv("MYSQL_URL")
-	if dsn != "" && len(dsn) > 9 && dsn[:8] == "mysql://" {
-		// Chuyển mysql://user:pass@host:port/dbname?params thành user:pass@tcp(host:port)/dbname?params
-		dsn = dsn[8:]
-		atIdx := -1
-		for i, c := range dsn {
-			if c == '@' {
-				atIdx = i
-				break
-			}
-		}
-		if atIdx != -1 {
-			auth := dsn[:atIdx]
-			hostDb := dsn[atIdx+1:]
-			// hostDb: host:port/dbname?params
-			slashIdx := -1
-			for i, c := range hostDb {
-				if c == '/' {
-					slashIdx = i
-					break
-				}
-			}
-			if slashIdx != -1 {
-				host := hostDb[:slashIdx]
-				dbAndParams := hostDb[slashIdx:]
-				host = "@tcp(" + host + ")"
-				dsn = auth + host + dbAndParams
-			}
-		}
-	}
-	if dsn == "" {
-		dsn = "root:123123@tcp(127.0.0.1:3306)/project-db?charset=utf8mb4&parseTime=True&loc=Local"
-	}
-	client, err := ent.Open("mysql", dsn)
+	// Kết nối database
+	//client, err := ent.Open("mysql", "root:123123@tcp(127.0.0.1:3306)/project-db?charset=utf8mb4&parseTime=True&loc=Local")
+	client, err := ent.Open("mysql", "root:123123@tcp(mysql-project:3306)/project-db?charset=utf8mb4&parseTime=True&loc=Local")
 	if err != nil {
 		log.Fatalf("failed opening connection to mysql: %v", err)
 	}

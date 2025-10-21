@@ -21,9 +21,9 @@ type projectCRUDCase struct {
 }
 
 func TestProjectRepo_CRUD(t *testing.T) {
-	t.Run("fail on purpose", func(t *testing.T) {
-		require.Equal(t, 1, 2, "Always fail!")
-	})
+	// t.Run("fail on purpose", func(t *testing.T) {
+	// 	require.Equal(t, 1, 2, "Always fail!")
+	// })
 	client := enttest.Open(t, "sqlite3", "file:memdb?mode=memory&cache=shared&_fk=1")
 	defer client.Close()
 	repo := NewProjectRepo(client)

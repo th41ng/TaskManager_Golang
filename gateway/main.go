@@ -89,21 +89,30 @@ func main() {
 
 	creds := credentials.NewClientTLSFromCert(nil, "")
 
+	log.Printf("Connecting to user-service at %s...", userAddr)
 	Userconnect, err := grpc.Dial(userAddr, grpc.WithTransportCredentials(creds))
 	if err != nil {
-		log.Fatalf("failed to connect to user-service: %v", err)
+		log.Fatalf("❌ Failed to connect to user-service: %v", err)
+	} else {
+		log.Println("✅ Connected to user-service!")
 	}
 	defer Userconnect.Close()
 
+	log.Printf("Connecting to task-service at %s...", taskAddr)
 	Taskconnect, err := grpc.Dial(taskAddr, grpc.WithTransportCredentials(creds))
 	if err != nil {
-		log.Fatalf("failed to connect to task-service: %v", err)
+		log.Fatalf("❌ Failed to connect to task-service: %v", err)
+	} else {
+		log.Println("✅ Connected to task-service!")
 	}
 	defer Taskconnect.Close()
 
+	log.Printf("Connecting to project-service at %s...", projectAddr)
 	ProjectConnect, err := grpc.Dial(projectAddr, grpc.WithTransportCredentials(creds))
 	if err != nil {
-		log.Fatalf("failed to connect to project-service: %v", err)
+		log.Fatalf("❌ Failed to connect to project-service: %v", err)
+	} else {
+		log.Println("✅ Connected to project-service!")
 	}
 	defer ProjectConnect.Close()
 

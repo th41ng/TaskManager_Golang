@@ -1,6 +1,6 @@
 module taskmanager/microservices/project-service
 
-go 1.25.1
+go 1.24.0
 
 require (
 	github.com/go-sql-driver/mysql v1.9.3
