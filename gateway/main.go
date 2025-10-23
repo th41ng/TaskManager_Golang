@@ -12,7 +12,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 // Adapter chuyển net/http middleware sang Gin middleware
@@ -87,7 +87,7 @@ func main() {
 	taskAddr := os.Getenv("TASK_SERVICE_URL")
 	projectAddr := os.Getenv("PROJECT_SERVICE_URL")
 
-	creds := credentials.NewClientTLSFromCert(nil, "")
+	creds := insecure.NewCredentials()
 
 	log.Printf("Connecting to user-service at %s...", userAddr)
 	Userconnect, err := grpc.Dial(userAddr, grpc.WithTransportCredentials(creds))
@@ -152,6 +152,11 @@ func main() {
 	authGroup.GET("/project/:id", projectHandler.GetProject)
 	authGroup.PUT("/project/:id", projectHandler.UpdateProject)
 	authGroup.DELETE("/project/:id", projectHandler.DeleteProject)
+
+	// simple health endpoint used by Nomad/Consul
+	r.GET("/healthz", func(c *gin.Context) {
+		c.JSON(200, gin.H{"status": "ok"})
+	})
 
 	log.Println("Gateway running on :8080")
 	if err := http.ListenAndServe(":8080", r); err != nil {

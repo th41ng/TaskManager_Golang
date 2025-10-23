@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"net"
+	"os"
 
 	"taskmanager/microservices/user-service/ent"
 	"taskmanager/microservices/user-service/internal/service"
@@ -11,12 +12,15 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 )
 
 func main() {
-	// Kết nối database
-	//client, err := ent.Open("mysql", "root:123123@tcp(127.0.0.1:3306)/user-db?charset=utf8mb4&parseTime=True&loc=Local")
-	client, err := ent.Open("mysql", "root:123123@tcp(mysql-user:3306)/user-db?charset=utf8mb4&parseTime=True&loc=Local")
+	dsn := os.Getenv("MYSQL_URL")
+	if dsn == "" {
+		dsn = "root:Thang@2004@tcp(mysql.service.consul:3306)/taskmanager?charset=utf8mb4&parseTime=True&loc=Local"
+	}
+	client, err := ent.Open("mysql", dsn)
 	if err != nil {
 		log.Fatalf("failed opening connection to mysql: %v", err)
 	}
@@ -43,6 +47,9 @@ func main() {
 
 	grpcServer := grpc.NewServer()
 	pb.RegisterUserServiceServer(grpcServer, userService)
+
+	// Register reflection service on gRPC server so tools like grpcurl can introspect
+	reflection.Register(grpcServer)
 
 	log.Println("✅ UserService listening on :50051")
 	if err := grpcServer.Serve(lis); err != nil {
