@@ -2,24 +2,19 @@ job "taskmanager" {
   datacenters = ["dc1"]
   type        = "service"
 
-  ##########################
-  # 🧱 MySQL Database (internal)
-  ##########################
-  group "mysql" {
+  #Internal Group (MySQL + gRPC services)
+  group "internal-services" {
     count = 1
 
     network {
-      port "db" {
-        static = 3306
-      }
+      mode = "host"
+      port "mysql"   { static = 3306 }
+      port "user"    { static = 50051 }
+      port "project" { static = 50052 }
+      port "task"    { static = 50053 }
     }
 
-    volume "mysql" {
-      type      = "host"
-      read_only = false
-      source    = "mysql"
-    }
-
+    #MySQL Database
     task "mysql" {
       driver = "docker"
 
@@ -29,15 +24,15 @@ job "taskmanager" {
         read_only   = false
       }
 
+      config {
+        image = "mysql:8.0"
+        ports = ["mysql"]
+      }
+
       env {
         MYSQL_ROOT_PASSWORD = "Thang@2004"
         MYSQL_DATABASE      = "taskmanager"
         MYSQL_ROOT_HOST     = "%"
-      }
-
-      config {
-        image = "mysql:8.0"
-        ports = ["db"]
       }
 
       resources {
@@ -47,45 +42,27 @@ job "taskmanager" {
 
       service {
         name = "mysql"
-        port = "db"
-        tags = ["internal"]
+        port = "mysql"
+
         check {
           name     = "mysql-tcp"
           type     = "tcp"
-          port     = "db"
           interval = "10s"
           timeout  = "2s"
         }
       }
     }
-  }
 
-  ##########################
-  # 🟣 User Service (internal)
-  ##########################
-  group "user-service" {
-    count = 1
-
-    network {
-      port "grpc" {
-        to = 50051
-      }
-    }
-
-    task "user" {
+    #User Service
+    task "user-service" {
       driver = "docker"
 
       config {
         image = "thangmicro/user-service:latest"
-        ports = ["grpc"]
+        ports = ["user"]
       }
 
       env {
-        DB_HOST   = "mysql.service.consul"
-        DB_PORT   = "3306"
-        DB_USER   = "root"
-        DB_PASS   = "Thang@2004"
-        DB_NAME   = "taskmanager"
         MYSQL_URL = "root:Thang@2004@tcp(172.21.223.107:3306)/taskmanager?charset=utf8mb4&parseTime=True&loc=Local"
       }
 
@@ -96,45 +73,28 @@ job "taskmanager" {
 
       service {
         name = "user-service"
-        port = "grpc"
+        port = "user"
         tags = ["internal"]
+
         check {
           name     = "user-grpc"
           type     = "tcp"
-          port     = "grpc"
           interval = "10s"
           timeout  = "2s"
         }
       }
     }
-  }
 
-  ##########################
-  # 🟡 Project Service (internal)
-  ##########################
-  group "project-service" {
-    count = 1
-
-    network {
-      port "grpc" {
-        to = 50052
-      }
-    }
-
-    task "project" {
+    # 🟡 Project Service
+    task "project-service" {
       driver = "docker"
 
       config {
         image = "thangmicro/project-service:latest"
-        ports = ["grpc"]
+        ports = ["project"]
       }
 
       env {
-        DB_HOST   = "mysql.service.consul"
-        DB_PORT   = "3306"
-        DB_USER   = "root"
-        DB_PASS   = "Thang@2004"
-        DB_NAME   = "taskmanager"
         MYSQL_URL = "root:Thang@2004@tcp(172.21.223.107:3306)/taskmanager?charset=utf8mb4&parseTime=True&loc=Local"
       }
 
@@ -145,45 +105,28 @@ job "taskmanager" {
 
       service {
         name = "project-service"
-        port = "grpc"
+        port = "project"
         tags = ["internal"]
+
         check {
           name     = "project-grpc"
           type     = "tcp"
-          port     = "grpc"
           interval = "10s"
           timeout  = "2s"
         }
       }
     }
-  }
 
-  ##########################
-  # 🔵 Task Service (internal)
-  ##########################
-  group "task-service" {
-    count = 1
-
-    network {
-      port "grpc" {
-        to = 50053
-      }
-    }
-
-    task "task" {
+    # 🔵 Task Service
+    task "task-service" {
       driver = "docker"
 
       config {
         image = "thangmicro/task-service:latest"
-        ports = ["grpc"]
+        ports = ["task"]
       }
 
       env {
-        DB_HOST   = "mysql.service.consul"
-        DB_PORT   = "3306"
-        DB_USER   = "root"
-        DB_PASS   = "Thang@2004"
-        DB_NAME   = "taskmanager"
         MYSQL_URL = "root:Thang@2004@tcp(172.21.223.107:3306)/taskmanager?charset=utf8mb4&parseTime=True&loc=Local"
       }
 
@@ -194,30 +137,32 @@ job "taskmanager" {
 
       service {
         name = "task-service"
-        port = "grpc"
+        port = "task"
         tags = ["internal"]
+
         check {
           name     = "task-grpc"
           type     = "tcp"
-          port     = "grpc"
           interval = "10s"
           timeout  = "2s"
         }
       }
     }
+
+    volume "mysql" {
+      type      = "host"
+      read_only = false
+      source    = "mysql"
+    }
   }
 
-  ##########################
-  # 🟢 Gateway (Public)
-  ##########################
+  # 🟢 Gateway (public)
   group "gateway" {
     count = 1
 
     network {
-      port "http" {
-        static = 8080
-        to     = 8080
-      }
+      mode = "host"
+      port "http" { static = 8080 }
     }
 
     task "gateway" {
@@ -229,9 +174,9 @@ job "taskmanager" {
       }
 
       env {
-        USER_SERVICE_URL    = "172.21.223.107:27898"
-        PROJECT_SERVICE_URL = "172.21.223.107:27196"
-        TASK_SERVICE_URL    = "172.21.223.107:26735"
+        USER_SERVICE_URL    = "172.21.223.107:50051"
+        PROJECT_SERVICE_URL = "172.21.223.107:50052"
+        TASK_SERVICE_URL    = "172.21.223.107:50053"
       }
 
       resources {
@@ -243,10 +188,11 @@ job "taskmanager" {
         name = "gateway"
         port = "http"
         tags = ["public"]
+
         check {
-          name     = "gateway-tcp"
-          type     = "tcp"
-          port     = "http"
+          name     = "gateway-http"
+          type     = "http"
+          path     = "/healthz"
           interval = "10s"
           timeout  = "2s"
         }
@@ -254,3 +200,7 @@ job "taskmanager" {
     }
   }
 }
+
+
+
+         
