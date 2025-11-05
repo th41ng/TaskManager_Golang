@@ -13,4 +13,20 @@ client {
     read_only = false
   }
 
+  # Host volumes for per-service MySQL instances
+  host_volume "mysql_user" {
+    path      = "/opt/mysql/user"
+    read_only = false
+  }
+
+  host_volume "mysql_project" {
+    path      = "/opt/mysql/project"
+    read_only = false
+  }
+
+  host_volume "mysql_task" {
+    path      = "/opt/mysql/task"
+    read_only = false
+  }
+
 }

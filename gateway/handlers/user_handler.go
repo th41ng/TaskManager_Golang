@@ -3,6 +3,7 @@ package handlers
 import (
 	"net/http"
 	"strconv"
+	"strings"
 
 	pb "taskmanager/gateway/pb"
 
@@ -116,4 +117,44 @@ func (h *UserHandler) DeleteUser(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "user deleted successfully"})
+}
+
+// LIST: GET /users?search=&page=&limit=
+func (h *UserHandler) ListUsers(c *gin.Context) {
+	search := c.Query("search")
+	pageStr := c.DefaultQuery("page", "1")
+	limitStr := c.DefaultQuery("limit", "10")
+	page, _ := strconv.Atoi(pageStr)
+	if page < 1 {
+		page = 1
+	}
+	limit, _ := strconv.Atoi(limitStr)
+	if limit < 1 {
+		limit = 10
+	}
+
+	res, err := h.UserClient.ListUsers(c.Request.Context(), &pb.ListUsersRequest{})
+	if err != nil {
+		handleGrpcError(c, err)
+		return
+	}
+
+	items := make([]*pb.UserResponse, 0)
+	for _, u := range res.GetUsers() {
+		if search != "" && !strings.Contains(strings.ToLower(u.GetUsername()), strings.ToLower(search)) {
+			continue
+		}
+		items = append(items, u)
+	}
+	total := len(items)
+	start := (page - 1) * limit
+	if start > total {
+		start = total
+	}
+	end := start + limit
+	if end > total {
+		end = total
+	}
+	paged := items[start:end]
+	c.JSON(http.StatusOK, gin.H{"items": paged, "total": total, "page": page, "limit": limit})
 }

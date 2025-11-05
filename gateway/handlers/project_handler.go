@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
 	pb "taskmanager/gateway/pb"
@@ -18,6 +20,137 @@ type ProjectHandler struct {
 
 func NewProjectHandler(client pb.ProjectServiceClient) *ProjectHandler {
 	return &ProjectHandler{ProjectClient: client}
+}
+
+// LIST: GET /projects?owner_id=&search=&page=&limit=
+func (h *ProjectHandler) ListProjects(c *gin.Context) {
+	// query params
+	ownerIDStr := c.Query("owner_id")
+	search := c.Query("search")
+	pageStr := c.DefaultQuery("page", "1")
+	limitStr := c.DefaultQuery("limit", "10")
+
+	page, _ := strconv.Atoi(pageStr)
+	if page < 1 {
+		page = 1
+	}
+	limit, _ := strconv.Atoi(limitStr)
+	if limit < 1 {
+		limit = 10
+	}
+
+	var ownerIDFilter *int
+	if ownerIDStr != "" {
+		if v, err := strconv.Atoi(ownerIDStr); err == nil {
+			ownerIDFilter = &v
+		}
+	}
+
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
+	defer cancel()
+
+	res, err := h.ProjectClient.ListProjects(ctx, &pb.ListProjectsRequest{})
+	if err != nil {
+		handleGrpcError(c, err)
+		return
+	}
+
+	// filter in gateway
+	items := make([]*pb.ProjectResponse, 0)
+	for _, p := range res.GetProjects() {
+		if ownerIDFilter != nil && int(p.GetOwnerId()) != *ownerIDFilter {
+			continue
+		}
+		if search != "" && !containsFold(p.GetName(), search) {
+			continue
+		}
+		items = append(items, p)
+	}
+
+	total := len(items)
+	start := (page - 1) * limit
+	if start > total {
+		start = total
+	}
+	end := start + limit
+	if end > total {
+		end = total
+	}
+	paged := items[start:end]
+
+	c.JSON(http.StatusOK, gin.H{
+		"items": paged,
+		"total": total,
+		"page":  page,
+		"limit": limit,
+	})
+}
+
+// LIST by user: GET /users/:id/projects?search=&page=&limit=
+func (h *ProjectHandler) ListProjectsByUser(c *gin.Context) {
+	userIDStr := c.Param("id")
+	ownerID, err := strconv.Atoi(userIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user ID"})
+		return
+	}
+
+	// call list and filter by owner
+	search := c.Query("search")
+	pageStr := c.DefaultQuery("page", "1")
+	limitStr := c.DefaultQuery("limit", "10")
+	page, _ := strconv.Atoi(pageStr)
+	if page < 1 {
+		page = 1
+	}
+	limit, _ := strconv.Atoi(limitStr)
+	if limit < 1 {
+		limit = 10
+	}
+
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
+	defer cancel()
+	res, err := h.ProjectClient.ListProjects(ctx, &pb.ListProjectsRequest{})
+	if err != nil {
+		handleGrpcError(c, err)
+		return
+	}
+
+	items := make([]*pb.ProjectResponse, 0)
+	for _, p := range res.GetProjects() {
+		if int(p.GetOwnerId()) != ownerID {
+			continue
+		}
+		if search != "" && !containsFold(p.GetName(), search) {
+			continue
+		}
+		items = append(items, p)
+	}
+	total := len(items)
+	start := (page - 1) * limit
+	if start > total {
+		start = total
+	}
+	end := start + limit
+	if end > total {
+		end = total
+	}
+	paged := items[start:end]
+	c.JSON(http.StatusOK, gin.H{"items": paged, "total": total, "page": page, "limit": limit})
+}
+
+// helper: case-insensitive contains
+func containsFold(s, sub string) bool {
+	return strings.Contains(strings.ToLower(s), strings.ToLower(sub))
+}
+
+// helper: add or replace query values
+func addOrReplaceQuery(raw string, kv map[string]string) string {
+	q, _ := url.ParseQuery(raw)
+	for k, v := range kv {
+		q.Set(k, v)
+	}
+	return q.Encode()
 }
 
 // CREATE: POST /projects

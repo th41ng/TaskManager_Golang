@@ -140,18 +140,24 @@ func main() {
 	authGroup.Use(AdaptNetHTTPMiddleware(middleware.AuthJWT))
 
 	authGroup.GET("/users/:id", userHandler.GetUser)
+	authGroup.GET("/users", userHandler.ListUsers)
 	authGroup.PUT("/users/:id", userHandler.UpdateUser)
 	authGroup.DELETE("/users/:id", userHandler.DeleteUser)
 
-	authGroup.POST("/task", taskHandler.CreateTask)
-	authGroup.GET("/task/:id", taskHandler.GetTask)
-	authGroup.PUT("/task/:id", taskHandler.UpdateTask)
-	authGroup.DELETE("/task/:id", taskHandler.DeleteTask)
-
+	// Projects
 	authGroup.POST("/project", projectHandler.CreateProject)
 	authGroup.GET("/project/:id", projectHandler.GetProject)
 	authGroup.PUT("/project/:id", projectHandler.UpdateProject)
 	authGroup.DELETE("/project/:id", projectHandler.DeleteProject)
+	authGroup.GET("/projects", projectHandler.ListProjects)
+	authGroup.GET("/users/:id/projects", projectHandler.ListProjectsByUser)
+
+	authGroup.POST("/tasks", taskHandler.CreateTask)
+	authGroup.GET("/tasks/:id", taskHandler.GetTask)
+	authGroup.PUT("/tasks/:id", taskHandler.UpdateTask)
+	authGroup.DELETE("/tasks/:id", taskHandler.DeleteTask)
+	authGroup.GET("/tasks", taskHandler.ListTasks)
+	authGroup.GET("/users/:id/tasks", func(c *gin.Context) { taskHandler.ListTasksByUser(c, projectClient) })
 
 	// simple health endpoint used by Nomad/Consul
 	r.GET("/healthz", func(c *gin.Context) {
