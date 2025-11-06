@@ -1,0 +1,104 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+  Scoped remote CSS for Task app
+  - Do NOT redefine theme variables (use Shell's variables)
+  - Keep styles minimal and scoped to root container
+*/
+
+/* Root container must be relative so overlays (absolute) stay inside */
+#task-app-root {
+  position: relative;
+  width: 100%;
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Scoped reset inside the remote container only */
+#task-app-root *,
+#task-app-root *::before,
+#task-app-root *::after {
+  box-sizing: border-box;
+}
+
+/* Overlay/backdrop should be absolute inside the root (not fixed to viewport) */
+.task-backdrop {
+  position: absolute; /* confined to #task-app-root */
+  inset: 0;
+  z-index: 60; /* keep below Shell header/sidebar */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+  background-color: hsl(var(--background) / 0.8);
+}
+
+/* Dialog content centered, limited width */
+.task-dialog {
+  position: relative;
+  width: min(92%, 480px);
+  max-width: 480px;
+  max-height: 86vh;
+  overflow-y: auto;
+  background-color: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius);
+  padding: 1rem 1.25rem;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+  z-index: 61;
+}
+
+/* Form controls using Shell variables */
+.task-input,
+.task-textarea,
+.task-select {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  background-color: hsl(var(--background));
+  border: 1px solid hsl(var(--input));
+  border-radius: var(--radius);
+  color: hsl(var(--foreground));
+  font-size: 0.9375rem;
+}
+
+.task-input:focus,
+.task-textarea:focus,
+.task-select:focus {
+  outline: none;
+  border-color: hsl(var(--ring));
+  box-shadow: 0 0 0 4px hsla(var(--ring) / 0.08);
+}
+
+/* Buttons */
+.task-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.9rem;
+  border-radius: var(--radius);
+  font-weight: 600;
+}
+.task-btn-primary { background-color: hsl(var(--primary)); color: hsl(var(--primary-foreground)); }
+.task-btn-secondary { background-color: hsl(var(--secondary)); color: hsl(var(--secondary-foreground)); }
+
+/* Simple card */
+.task-card {
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius);
+  padding: 1rem;
+}
+
+/* Layout helpers */
+.task-container { padding: 1rem; }
+.task-grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+
+@media (max-width: 640px) {
+  .task-grid { grid-template-columns: 1fr; }
+  .task-dialog { width: 95%; max-height: 90vh; }
+}

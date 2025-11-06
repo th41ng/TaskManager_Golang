@@ -2,23 +2,82 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { useState } from "react"
+
+// Nomad production API gateway
+const API_BASE_URL = 'http://172.21.223.107:8080'
 
 export function LoginForm({
   className,
   ...props
 }: React.ComponentPropsWithoutRef<"form">) {
+  const [username, setUsername] = useState("")
+  const [password, setPassword] = useState("")
+  const [error, setError] = useState("")
+  const [loading, setLoading] = useState(false)
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError("")
+    setLoading(true)
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username, password }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Login failed' }))
+        throw new Error(errorData.message || 'Invalid credentials')
+      }
+
+      const data = await response.json()
+      
+      // Lưu token vào localStorage thay vì cookie để chia sẻ giữa các micro-frontend
+      if (data.token) {
+        localStorage.setItem('token', data.token)
+        localStorage.setItem('user', JSON.stringify(data.user || { username }))
+        
+          // Chuyển về shell app dashboard trên Nomad
+          window.location.href = 'http://172.21.223.107:5173/'
+      } else {
+        throw new Error('No token received')
+      }
+    } catch (err: any) {
+      setError(err.message || 'An error occurred during login')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
-    <form className={cn("flex flex-col gap-6", className)} {...props}>
+    <form className={cn("flex flex-col gap-6", className)} onSubmit={handleSubmit} {...props}>
       <div className="flex flex-col items-center gap-2 text-center">
         <h1 className="text-2xl font-bold">Login to your account</h1>
         <p className="text-balance text-sm text-muted-foreground">
           Enter your username below to login to your account
         </p>
+        {error && (
+          <p className="text-sm text-red-600 bg-red-50 p-2 rounded">
+            {error}
+          </p>
+        )}
       </div>
       <div className="grid gap-6">
         <div className="grid gap-2">
           <Label htmlFor="username">Username</Label>
-          <Input id="username" type="username"  required />
+          <Input 
+            id="username" 
+            type="text" 
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            required 
+            disabled={loading}
+          />
         </div>
         <div className="grid gap-2">
           <div className="flex items-center">
@@ -30,10 +89,17 @@ export function LoginForm({
               Forgot your password?
             </a>
           </div>
-          <Input id="password" type="password" required />
+          <Input 
+            id="password" 
+            type="password" 
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required 
+            disabled={loading}
+          />
         </div>
-        <Button type="submit" className="w-full">
-          Login
+        <Button type="submit" className="w-full" disabled={loading}>
+          {loading ? 'Logging in...' : 'Login'}
         </Button>
         <div className="relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t after:border-border">
           <span className="relative z-10 bg-background px-2 text-muted-foreground">

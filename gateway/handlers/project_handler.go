@@ -79,10 +79,10 @@ func (h *ProjectHandler) ListProjects(c *gin.Context) {
 	paged := items[start:end]
 
 	c.JSON(http.StatusOK, gin.H{
-		"items": paged,
-		"total": total,
-		"page":  page,
-		"limit": limit,
+		"projects": paged,
+		"total":    total,
+		"page":     page,
+		"limit":    limit,
 	})
 }
 
@@ -136,7 +136,7 @@ func (h *ProjectHandler) ListProjectsByUser(c *gin.Context) {
 		end = total
 	}
 	paged := items[start:end]
-	c.JSON(http.StatusOK, gin.H{"items": paged, "total": total, "page": page, "limit": limit})
+	c.JSON(http.StatusOK, gin.H{"projects": paged, "total": total, "page": page, "limit": limit})
 }
 
 // helper: case-insensitive contains

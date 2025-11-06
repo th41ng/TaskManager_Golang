@@ -1,175 +1,193 @@
-"use client"
-
 import * as React from "react"
+import { useEffect, useState, lazy, Suspense } from "react"
 import {
-  AudioWaveform,
-  BookOpen,
-  Bot,
-  Command,
-  Frame,
-  GalleryVerticalEnd,
-  Map,
-  PieChart,
-  Settings2,
-  SquareTerminal,
+  ArrowUpCircleIcon,
+  BarChartIcon,
+  FolderIcon,
+  HelpCircleIcon,
+  LayoutDashboardIcon,
+  PlusIcon,
+  SearchIcon,
+  SettingsIcon,
+  UsersIcon,
+  CheckSquareIcon,
+  FolderKanbanIcon,
 } from "lucide-react"
+import { useLocation } from "react-router"
 
 import { NavMain } from "@/components/nav-main"
-import { NavProjects } from "@/components/nav-projects"
+import { NavSecondary } from "@/components/nav-secondary"
 import { NavUser } from "@/components/nav-user"
-import { TeamSwitcher } from "@/components/team-switcher"
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
-  SidebarRail,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarGroup,
+  SidebarGroupLabel,
+  SidebarGroupContent,
 } from "@/components/ui/sidebar"
+import { Button } from "@/components/ui/button"
+import { projectsApi } from "@/lib/api"
+import type { Project } from "@/types"
 
-// This is sample data.
-const data = {
-  user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
-  teams: [
+// Import remote dialog
+const CreateProjectDialog = lazy(() => import("projectApp/ProjectApp").then(m => ({ default: m.CreateProjectDialog })))
+
+export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const [projects, setProjects] = useState<Project[]>([])
+  const [createProjectOpen, setCreateProjectOpen] = useState(false)
+  const location = useLocation()
+
+  useEffect(() => {
+    loadProjects()
+  }, [])
+
+  const loadProjects = () => {
+    projectsApi.list()
+      .then(setProjects)
+      .catch(err => console.error('Failed to load projects:', err))
+  }
+
+  const handleCreateProjectSuccess = () => {
+    setCreateProjectOpen(false)
+    loadProjects()
+  }
+
+  const navMain = [
     {
-      name: "Acme Inc",
-      logo: GalleryVerticalEnd,
-      plan: "Enterprise",
+      title: "Dashboard",
+      url: "/",
+      icon: LayoutDashboardIcon,
     },
     {
-      name: "Acme Corp.",
-      logo: AudioWaveform,
-      plan: "Startup",
+      title: "Tasks",
+      url: "/tasks",
+      icon: CheckSquareIcon,
     },
     {
-      name: "Evil Corp.",
-      logo: Command,
-      plan: "Free",
-    },
-  ],
-  navMain: [
-    {
-      title: "Playground",
-      url: "#",
-      icon: SquareTerminal,
-      isActive: true,
-      items: [
-        {
-          title: "History",
-          url: "#",
-        },
-        {
-          title: "Starred",
-          url: "#",
-        },
-        {
-          title: "Settings",
-          url: "#",
-        },
-      ],
+      title: "Projects",
+      url: "/projects-app",
+      icon: FolderKanbanIcon,
     },
     {
-      title: "Models",
-      url: "#",
-      icon: Bot,
-      items: [
-        {
-          title: "Genesis",
-          url: "#",
-        },
-        {
-          title: "Explorer",
-          url: "#",
-        },
-        {
-          title: "Quantum",
-          url: "#",
-        },
-      ],
+      title: "Users",
+      url: "/users",
+      icon: UsersIcon,
     },
-    {
-      title: "Documentation",
-      url: "#",
-      icon: BookOpen,
-      items: [
-        {
-          title: "Introduction",
-          url: "#",
-        },
-        {
-          title: "Get Started",
-          url: "#",
-        },
-        {
-          title: "Tutorials",
-          url: "#",
-        },
-        {
-          title: "Changelog",
-          url: "#",
-        },
-      ],
-    },
+  ]
+
+  const navSecondary = [
     {
       title: "Settings",
       url: "#",
-      icon: Settings2,
-      items: [
-        {
-          title: "General",
-          url: "#",
-        },
-        {
-          title: "Team",
-          url: "#",
-        },
-        {
-          title: "Billing",
-          url: "#",
-        },
-        {
-          title: "Limits",
-          url: "#",
-        },
-      ],
-    },
-  ],
-  projects: [
-    {
-      name: "Design Engineering",
-      url: "#",
-      icon: Frame,
+      icon: SettingsIcon,
     },
     {
-      name: "Sales & Marketing",
+      title: "Get Help",
       url: "#",
-      icon: PieChart,
+      icon: HelpCircleIcon,
     },
     {
-      name: "Travel",
+      title: "Search",
       url: "#",
-      icon: Map,
+      icon: SearchIcon,
     },
-  ],
-}
+  ]
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const user = {
+    name: "Admin User",
+    email: "admin@taskmanager.com",
+    avatar: "/avatars/default.jpg",
+  }
+
   return (
-    <Sidebar collapsible="icon" {...props}>
+    <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
-        <TeamSwitcher teams={data.teams} />
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              asChild
+              className="data-[slot=sidebar-menu-button]:!p-1.5"
+            >
+              <a href="/">
+                <LayoutDashboardIcon className="h-5 w-5" />
+                <span className="text-base font-semibold">TaskManager</span>
+              </a>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
-        <NavProjects projects={data.projects} />
+        <NavMain items={navMain} />
+        
+        {/* ================================================================
+            PROJECT LIST SECTION
+            ================================================================
+            Hiển thị danh sách projects hiện có
+            Khi click vào project → navigate đến /projects/:id (detail page)
+            Button "+" → Mở CreateProjectDialog
+            
+            Note: Khác với menu "Projects" ở trên:
+            - Menu "Projects" → /projects-app (full page ProjectApp)
+            - Section này → /projects/:id (project detail)
+        */}
+        <SidebarGroup>
+          <SidebarGroupLabel className="flex items-center justify-between">
+            <span>My Projects</span>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-5 w-5"
+              onClick={() => setCreateProjectOpen(true)}
+            >
+              <PlusIcon className="h-4 w-4" />
+            </Button>
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {projects.length === 0 ? (
+                <div className="px-2 py-4 text-xs text-muted-foreground">
+                  No projects yet
+                </div>
+              ) : (
+                projects.map((project) => (
+                  <SidebarMenuItem key={project.id}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={location.pathname === `/projects/${project.id}`}
+                    >
+                      <a href={`/projects/${project.id}`}>
+                        <FolderIcon className="size-4" />
+                        <span>{project.name}</span>
+                      </a>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))
+              )}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+        
+        <NavSecondary items={navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser user={user} />
       </SidebarFooter>
-      <SidebarRail />
+
+      {/* Remote Create Project Dialog */}
+      <Suspense fallback={null}>
+        {createProjectOpen && (
+          <CreateProjectDialog
+            open={createProjectOpen}
+            onOpenChange={setCreateProjectOpen}
+            onSuccess={handleCreateProjectSuccess}
+          />
+        )}
+      </Suspense>
     </Sidebar>
   )
 }

@@ -17,7 +17,7 @@ type rateLimiter struct {
 }
 
 const (
-	limit    = 10 // requests
+	limit    = 100 // requests
 	interval = time.Minute
 )
 

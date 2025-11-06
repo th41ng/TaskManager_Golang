@@ -91,7 +91,7 @@ func (h *TaskHandler) ListTasks(c *gin.Context) {
 		end = total
 	}
 	paged := items[start:end]
-	c.JSON(http.StatusOK, gin.H{"items": paged, "total": total, "page": page, "limit": limit})
+	c.JSON(http.StatusOK, gin.H{"tasks": paged, "total": total, "page": page, "limit": limit})
 }
 
 // LIST by user: GET /users/:id/tasks?search=&done=&priority=&page=&limit=
@@ -176,7 +176,7 @@ func (h *TaskHandler) ListTasksByUser(c *gin.Context, projectClient pb.ProjectSe
 		end = total
 	}
 	paged := items[start:end]
-	c.JSON(http.StatusOK, gin.H{"items": paged, "total": total, "page": page, "limit": limit})
+	c.JSON(http.StatusOK, gin.H{"tasks": paged, "total": total, "page": page, "limit": limit})
 }
 
 // CREATE: POST /tasks

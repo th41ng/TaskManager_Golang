@@ -276,19 +276,19 @@ job "taskmanager" {
     }
   }
 
-  # 🎨 Frontend Services
+  # 🎨 Frontend Micro-Frontends (Module Federation)
   group "frontend" {
     count = 1
 
     network {
       mode = "host"
-      port "shell"   { static = 5170 }
-      port "user"    { static = 5001 }
-      port "project" { static = 5002 }
-      port "task"    { static = 5003 }
+      port "shell"   { static = 5173 }  # Host app
+      port "user"    { static = 4001 }  # Remote: userApp
+      port "project" { static = 4002 }  # Remote: projectApp
+      port "task"    { static = 4003 }  # Remote: taskApp
     }
 
-    # Shell App (Main Frontend)
+    # Shell App (Host - Main Entry Point)
     task "shell-app" {
       driver = "docker"
 
@@ -298,18 +298,19 @@ job "taskmanager" {
       }
 
       env {
+        # API Gateway URL
         VITE_API_BASE = "http://172.21.223.107:8080"
       }
 
       resources {
-        cpu    = 200
-        memory = 128
+        cpu    = 300
+        memory = 256
       }
 
       service {
         name = "shell-app"
         port = "shell"
-        tags = ["frontend", "public"]
+        tags = ["frontend", "public", "module-federation-host"]
 
         check {
           name     = "shell-app-http"
@@ -321,7 +322,7 @@ job "taskmanager" {
       }
     }
 
-    # User App
+    # User App (Remote - Authentication & User Management)
     task "user-app" {
       driver = "docker"
 
@@ -342,19 +343,19 @@ job "taskmanager" {
       service {
         name = "user-app"
         port = "user"
-        tags = ["frontend"]
+        tags = ["frontend", "module-federation-remote"]
 
         check {
           name     = "user-app-http"
           type     = "http"
-          path     = "/"
+          path     = "/assets/remoteEntry.js"
           interval = "10s"
           timeout  = "2s"
         }
       }
     }
 
-    # Project App
+    # Project App (Remote - Project Dialogs)
     task "project-app" {
       driver = "docker"
 
@@ -375,19 +376,19 @@ job "taskmanager" {
       service {
         name = "project-app"
         port = "project"
-        tags = ["frontend"]
+        tags = ["frontend", "module-federation-remote"]
 
         check {
           name     = "project-app-http"
           type     = "http"
-          path     = "/"
+          path     = "/assets/remoteEntry.js"
           interval = "10s"
           timeout  = "2s"
         }
       }
     }
 
-    # Task App
+    # Task App (Remote - Task Dialogs)
     task "task-app" {
       driver = "docker"
 
@@ -408,12 +409,12 @@ job "taskmanager" {
       service {
         name = "task-app"
         port = "task"
-        tags = ["frontend"]
+        tags = ["frontend", "module-federation-remote"]
 
         check {
           name     = "task-app-http"
           type     = "http"
-          path     = "/"
+          path     = "/assets/remoteEntry.js"
           interval = "10s"
           timeout  = "2s"
         }

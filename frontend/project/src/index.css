@@ -1,0 +1,87 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Scoped remote CSS for Project app
+   - Use Shell's CSS variables only (do NOT redefine)
+   - Minimal, scoped rules so remote doesn't override Shell layout
+*/
+
+/* Root container (keep position:relative so absolute overlays stay inside) */
+#project-app-root {
+  position: relative;
+  width: 100%;
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Small scope reset */
+#project-app-root *,
+#project-app-root *::before,
+#project-app-root *::after { box-sizing: border-box; }
+
+/* Backdrop confined to root (absolute) */
+.project-backdrop {
+  position: absolute; /* confined to #project-app-root */
+  inset: 0;
+  z-index: 60; /* keep below Shell header/sidebar */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+  background-color: hsl(var(--background) / 0.8);
+}
+
+/* Dialog content */
+.project-dialog {
+  position: relative;
+  width: min(92%, 480px);
+  max-width: 480px;
+  max-height: 86vh;
+  overflow-y: auto;
+  background-color: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius);
+  padding: 1rem 1.25rem;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+  z-index: 61;
+}
+
+/* Form controls using Shell variables */
+.project-input,
+.project-textarea,
+.project-select {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  background-color: hsl(var(--background));
+  border: 1px solid hsl(var(--input));
+  border-radius: var(--radius);
+  color: hsl(var(--foreground));
+  font-size: 0.9375rem;
+}
+
+.project-input:focus,
+.project-textarea:focus,
+.project-select:focus {
+  outline: none;
+  border-color: hsl(var(--ring));
+  box-shadow: 0 0 0 4px hsla(var(--ring) / 0.08);
+}
+
+.project-btn { display: inline-flex; gap: 0.5rem; align-items: center; padding: 0.5rem 0.9rem; border-radius: var(--radius); font-weight: 600; }
+.project-btn-primary { background-color: hsl(var(--primary)); color: hsl(var(--primary-foreground)); }
+.project-btn-secondary { background-color: hsl(var(--secondary)); color: hsl(var(--secondary-foreground)); }
+
+.project-card { background: hsl(var(--card)); border: 1px solid hsl(var(--border)); border-radius: var(--radius); padding: 1.25rem; }
+
+.project-container { padding: 1rem; }
+.project-grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
+
+@media (max-width: 640px) {
+  .project-grid { grid-template-columns: 1fr; }
+  .project-dialog { width: 95%; max-height: 90vh; }
+}
+

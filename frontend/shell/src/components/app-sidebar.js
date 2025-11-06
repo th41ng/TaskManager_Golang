@@ -1,140 +1,74 @@
-"use client";
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
-import { AudioWaveform, BookOpen, Bot, Command, Frame, GalleryVerticalEnd, Map, PieChart, Settings2, SquareTerminal, } from "lucide-react";
+import { useEffect, useState, lazy, Suspense } from "react";
+import { FolderIcon, HelpCircleIcon, LayoutDashboardIcon, PlusIcon, SearchIcon, SettingsIcon, UsersIcon, CheckSquareIcon, FolderKanbanIcon, } from "lucide-react";
+import { useLocation } from "react-router";
 import { NavMain } from "@/components/nav-main";
-import { NavProjects } from "@/components/nav-projects";
+import { NavSecondary } from "@/components/nav-secondary";
 import { NavUser } from "@/components/nav-user";
-import { TeamSwitcher } from "@/components/team-switcher";
-import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarRail, } from "@/components/ui/sidebar";
-// This is sample data.
-const data = {
-    user: {
-        name: "shadcn",
-        email: "m@example.com",
-        avatar: "/avatars/shadcn.jpg",
-    },
-    teams: [
+import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarGroup, SidebarGroupLabel, SidebarGroupContent, } from "@/components/ui/sidebar";
+import { Button } from "@/components/ui/button";
+import { projectsApi } from "@/lib/api";
+// Import remote dialog
+const CreateProjectDialog = lazy(() => import("projectApp/ProjectApp").then(m => ({ default: m.CreateProjectDialog })));
+export function AppSidebar({ ...props }) {
+    const [projects, setProjects] = useState([]);
+    const [createProjectOpen, setCreateProjectOpen] = useState(false);
+    const location = useLocation();
+    useEffect(() => {
+        loadProjects();
+    }, []);
+    const loadProjects = () => {
+        projectsApi.list()
+            .then(setProjects)
+            .catch(err => console.error('Failed to load projects:', err));
+    };
+    const handleCreateProjectSuccess = () => {
+        setCreateProjectOpen(false);
+        loadProjects();
+    };
+    const navMain = [
         {
-            name: "Acme Inc",
-            logo: GalleryVerticalEnd,
-            plan: "Enterprise",
+            title: "Dashboard",
+            url: "/",
+            icon: LayoutDashboardIcon,
         },
         {
-            name: "Acme Corp.",
-            logo: AudioWaveform,
-            plan: "Startup",
+            title: "Tasks",
+            url: "/tasks",
+            icon: CheckSquareIcon,
         },
         {
-            name: "Evil Corp.",
-            logo: Command,
-            plan: "Free",
-        },
-    ],
-    navMain: [
-        {
-            title: "Playground",
-            url: "#",
-            icon: SquareTerminal,
-            isActive: true,
-            items: [
-                {
-                    title: "History",
-                    url: "#",
-                },
-                {
-                    title: "Starred",
-                    url: "#",
-                },
-                {
-                    title: "Settings",
-                    url: "#",
-                },
-            ],
+            title: "Projects",
+            url: "/projects-app",
+            icon: FolderKanbanIcon,
         },
         {
-            title: "Models",
-            url: "#",
-            icon: Bot,
-            items: [
-                {
-                    title: "Genesis",
-                    url: "#",
-                },
-                {
-                    title: "Explorer",
-                    url: "#",
-                },
-                {
-                    title: "Quantum",
-                    url: "#",
-                },
-            ],
+            title: "Users",
+            url: "/users",
+            icon: UsersIcon,
         },
-        {
-            title: "Documentation",
-            url: "#",
-            icon: BookOpen,
-            items: [
-                {
-                    title: "Introduction",
-                    url: "#",
-                },
-                {
-                    title: "Get Started",
-                    url: "#",
-                },
-                {
-                    title: "Tutorials",
-                    url: "#",
-                },
-                {
-                    title: "Changelog",
-                    url: "#",
-                },
-            ],
-        },
+    ];
+    const navSecondary = [
         {
             title: "Settings",
             url: "#",
-            icon: Settings2,
-            items: [
-                {
-                    title: "General",
-                    url: "#",
-                },
-                {
-                    title: "Team",
-                    url: "#",
-                },
-                {
-                    title: "Billing",
-                    url: "#",
-                },
-                {
-                    title: "Limits",
-                    url: "#",
-                },
-            ],
-        },
-    ],
-    projects: [
-        {
-            name: "Design Engineering",
-            url: "#",
-            icon: Frame,
+            icon: SettingsIcon,
         },
         {
-            name: "Sales & Marketing",
+            title: "Get Help",
             url: "#",
-            icon: PieChart,
+            icon: HelpCircleIcon,
         },
         {
-            name: "Travel",
+            title: "Search",
             url: "#",
-            icon: Map,
+            icon: SearchIcon,
         },
-    ],
-};
-export function AppSidebar({ ...props }) {
-    return (_jsxs(Sidebar, { collapsible: "icon", ...props, children: [_jsx(SidebarHeader, { children: _jsx(TeamSwitcher, { teams: data.teams }) }), _jsxs(SidebarContent, { children: [_jsx(NavMain, { items: data.navMain }), _jsx(NavProjects, { projects: data.projects })] }), _jsx(SidebarFooter, { children: _jsx(NavUser, { user: data.user }) }), _jsx(SidebarRail, {})] }));
+    ];
+    const user = {
+        name: "Admin User",
+        email: "admin@taskmanager.com",
+        avatar: "/avatars/default.jpg",
+    };
+    return (_jsxs(Sidebar, { collapsible: "offcanvas", ...props, children: [_jsx(SidebarHeader, { children: _jsx(SidebarMenu, { children: _jsx(SidebarMenuItem, { children: _jsx(SidebarMenuButton, { asChild: true, className: "data-[slot=sidebar-menu-button]:!p-1.5", children: _jsxs("a", { href: "/", children: [_jsx(LayoutDashboardIcon, { className: "h-5 w-5" }), _jsx("span", { className: "text-base font-semibold", children: "TaskManager" })] }) }) }) }) }), _jsxs(SidebarContent, { children: [_jsx(NavMain, { items: navMain }), _jsxs(SidebarGroup, { children: [_jsxs(SidebarGroupLabel, { className: "flex items-center justify-between", children: [_jsx("span", { children: "My Projects" }), _jsx(Button, { variant: "ghost", size: "icon", className: "h-5 w-5", onClick: () => setCreateProjectOpen(true), children: _jsx(PlusIcon, { className: "h-4 w-4" }) })] }), _jsx(SidebarGroupContent, { children: _jsx(SidebarMenu, { children: projects.length === 0 ? (_jsx("div", { className: "px-2 py-4 text-xs text-muted-foreground", children: "No projects yet" })) : (projects.map((project) => (_jsx(SidebarMenuItem, { children: _jsx(SidebarMenuButton, { asChild: true, isActive: location.pathname === `/projects/${project.id}`, children: _jsxs("a", { href: `/projects/${project.id}`, children: [_jsx(FolderIcon, { className: "size-4" }), _jsx("span", { children: project.name })] }) }) }, project.id)))) }) })] }), _jsx(NavSecondary, { items: navSecondary, className: "mt-auto" })] }), _jsx(SidebarFooter, { children: _jsx(NavUser, { user: user }) }), _jsx(Suspense, { fallback: null, children: createProjectOpen && (_jsx(CreateProjectDialog, { open: createProjectOpen, onOpenChange: setCreateProjectOpen, onSuccess: handleCreateProjectSuccess })) })] }));
 }

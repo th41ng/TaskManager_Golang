@@ -9,7 +9,9 @@
     "esModuleInterop": true,
     "moduleResolution": "bundler",
     "module": "esnext",
-    "target": "esnext"
+    "target": "esnext",
+    "lib": ["esnext", "dom", "dom.iterable"],
+    "skipLibCheck": true
   },
   "include": ["src"]
 }

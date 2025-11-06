@@ -131,12 +131,15 @@ func main() {
 		AdaptNetHTTPMiddleware(middleware.RateLimit),
 	)
 
+	// API group
+	api := r.Group("/api")
+
 	// Public routes (no AuthJWT)
-	r.POST("/login", userHandler.Login)
-	r.POST("/users", userHandler.CreateUser)
+	api.POST("/login", userHandler.Login)
+	api.POST("/users", userHandler.CreateUser)
 
 	// Protected routes (require AuthJWT)
-	authGroup := r.Group("/")
+	authGroup := api.Group("/")
 	authGroup.Use(AdaptNetHTTPMiddleware(middleware.AuthJWT))
 
 	authGroup.GET("/users/:id", userHandler.GetUser)
@@ -144,14 +147,15 @@ func main() {
 	authGroup.PUT("/users/:id", userHandler.UpdateUser)
 	authGroup.DELETE("/users/:id", userHandler.DeleteUser)
 
-	// Projects
-	authGroup.POST("/project", projectHandler.CreateProject)
-	authGroup.GET("/project/:id", projectHandler.GetProject)
-	authGroup.PUT("/project/:id", projectHandler.UpdateProject)
-	authGroup.DELETE("/project/:id", projectHandler.DeleteProject)
+	// Projects - Sử dụng /projects để thống nhất
+	authGroup.POST("/projects", projectHandler.CreateProject)
+	authGroup.GET("/projects/:id", projectHandler.GetProject)
+	authGroup.PUT("/projects/:id", projectHandler.UpdateProject)
+	authGroup.DELETE("/projects/:id", projectHandler.DeleteProject)
 	authGroup.GET("/projects", projectHandler.ListProjects)
 	authGroup.GET("/users/:id/projects", projectHandler.ListProjectsByUser)
 
+	// Tasks
 	authGroup.POST("/tasks", taskHandler.CreateTask)
 	authGroup.GET("/tasks/:id", taskHandler.GetTask)
 	authGroup.PUT("/tasks/:id", taskHandler.UpdateTask)
